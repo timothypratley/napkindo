@@ -1,0 +1,4 @@
+{:require [napkindo.devcards]
+ :init-fns [napkindo.devcards/init]
+ :compiler-options {:asset-path "js/devcards.out"
+                    :devcards true}}

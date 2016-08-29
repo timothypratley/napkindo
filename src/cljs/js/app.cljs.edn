@@ -1,0 +1,3 @@
+{:require  [napkindo.main]
+ :init-fns [napkindo.main/init]
+ :compiler-options {:asset-path "js/app.out"}}
