@@ -1,4 +1,4 @@
-{:require [napkindo.devcards]
- :init-fns [napkindo.devcards/init]
+{:require [algopop.napkindo.devcards]
+ :init-fns [algopop.napkindo.devcards/init]
  :compiler-options {:asset-path "js/devcards.out"
                     :devcards true}}

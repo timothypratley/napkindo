@@ -1,4 +1,4 @@
-(ns napkindo.combinatorics)
+(ns algopop.napkindo.combinatorics)
 
 ;; see https://github.com/clojure/math.combinatorics
 

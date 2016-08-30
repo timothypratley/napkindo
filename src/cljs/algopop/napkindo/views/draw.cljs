@@ -1,24 +1,29 @@
-(ns napkindo.views.draw
+(ns algopop.napkindo.views.draw
   (:require
     [reagent.core :as reagent]
-    [napkindo.names :as names]
+    [algopop.napkindo.names :as names]
     [devcards.core]
     [clojure.string :as string]
     [cljs.tools.reader.edn :as edn]
-    [napkindo.model :as model])
+    [algopop.napkindo.model :as model])
   (:require-macros
     [devcards.core :refer [defcard-rg]]))
 
 (def default-dims [400 400])
 
 (defn xy [e [width height]]
-  (let [rect (.getBoundingClientRect (or (.-currentTarget e) (.-target e)))]
+  (let [rect (.getBoundingClientRect (if (exists? (.-currentTarget e))
+                                       (.-currentTarget e)
+                                       (.-target e)))
+        ;; Android old versions don't return the correct rect width/height
+        w (.. e -target -width -baseVal -value)
+        h (.. e -target -height -baseVal -value)]
     [(-> (- (.-clientX e) (.-left rect))
-         (/ (.-width rect))
+         (/ w)
          (* width)
          (js/Math.round))
      (-> (- (.-clientY e) (.-top rect))
-         (/ (.-height rect))
+         (/ h)
          (* height)
          (js/Math.round))]))
 
@@ -40,45 +45,64 @@
 (defn a-draw [drawing img mode select drag dropped start-path continue-path end-path]
   (when @drawing
     [:div
-     [:svg
-      (merge-with
-        merge
-        {:view-box (string/join " " (concat [0 0] (:dims @drawing default-dims)))
-         :style {:border "1px solid black"
-                 ;; TODO: use css and all browsers
-                 :-webkit-user-select "none"}}
-        (if (= @mode ::edit)
-          {:style {:cursor "move"}
-           :on-touch-start (one-touch-handler select)
-           :on-mouse-down select
-           :on-mouse-over select
-           :on-touch-move (one-touch-handler drag)
-           :on-mouse-move drag
-           :on-touch-end (one-touch-handler dropped)
-           :on-mouse-up dropped
-           :on-touch-cancel (one-touch-handler dropped)
-           :on-mouse-out dropped}
-          {:style {:cursor "crosshair"}
-           :on-touch-start (one-touch-handler start-path)
-           :on-mouse-down start-path
-           :on-mouse-over start-path
-           :on-touch-move (one-touch-handler continue-path)
-           :on-mouse-move continue-path
-           :on-touch-end (one-touch-handler end-path)
-           :on-mouse-up end-path
-           :on-touch-cancel (one-touch-handler end-path)
-           :on-mouse-out end-path}))
-      (when @img
-        [:image {:xlink-href @img
-                 :width "100%"
-                 :height "100%"
-                 :opacity 0.3}])
-      (into
-        [:g {:fill "none"
-             :stroke "black"
-             :stroke-width 5}]
-        (for [elem (:svg @drawing)]
-          (prepare elem @mode)))]
+     [:div
+      ;; http://alistapart.com/article/creating-intrinsic-ratios-for-video
+      {:style {:height 0
+               :padding-bottom "100%"
+               :position "relative"}}
+      [:svg
+       (merge-with
+         merge
+         {:view-box (string/join " " (concat [0 0] (:dims @drawing default-dims)))
+          :style {:position "absolute"
+                  :top 0
+                  :left 0
+                  :width "100%"
+                  :height "100%"
+                  :border "1px solid black"
+                  :-webkit-touch-callout "none"
+                  :-webkit-user-select "none"
+                  :-khtml-user-select "none"
+                  :-moz-user-select "none"
+                  :-ms-user-select "none"
+                  :user-select "none"}}
+         (if (= @mode ::edit)
+           {:style {:cursor "move"}
+            :on-touch-start (one-touch-handler select)
+            :on-mouse-down select
+            :on-mouse-over select
+            :on-touch-move (one-touch-handler drag)
+            :on-mouse-move drag
+            :on-touch-end (one-touch-handler dropped)
+            :on-mouse-up dropped
+            :on-touch-cancel (one-touch-handler dropped)
+            :on-mouse-out dropped}
+           {:style {:cursor "crosshair"}
+            :on-touch-start (one-touch-handler start-path)
+            :on-mouse-down start-path
+            :on-mouse-over start-path
+            :on-touch-move (one-touch-handler continue-path)
+            :on-mouse-move continue-path
+            :on-touch-end (one-touch-handler end-path)
+            :on-mouse-up end-path
+            :on-touch-cancel (one-touch-handler end-path)
+            :on-mouse-out end-path}))
+       (when @img
+         [:image {:xlink-href @img
+                  :width "100%"
+                  :height "100%"
+                  :opacity 0.3}])
+       (into
+         [:g {:fill "none"
+              :style {:pointer-events "none"}
+              :on-touch-start
+              (fn [e] (.preventDefault e))
+              :stroke "black"
+              :stroke-width 5
+              :stroke-linecap "round"
+              :stroke-linejoin "round"}]
+         (for [elem (:svg @drawing)]
+           (prepare elem @mode)))]]
      [:input {:type "text"
               :style {:width "100%"}
               :default-value (:title @drawing)
@@ -142,7 +166,6 @@
          (swap! drawing assoc :notes (.. e -target -value)))}]]))
 
 (defn draw [drawing save]
-  (prn "DRAW")
   (let [img (reagent/atom nil)
         pen-down? (reagent/atom false)
         mode (reagent/atom ::draw)
@@ -184,8 +207,10 @@
   (into
     [tag (merge {:fill "none"
                  :stroke "black"
-                 :stroke-width 5}
-               properties)]
+                 :stroke-width 5
+                 :stroke-linecap "round"
+                 :stroke-linejoin "round"}
+                properties)]
     (for [elem elems]
       (prepare elem ::draw))))
 

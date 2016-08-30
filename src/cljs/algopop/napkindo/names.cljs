@@ -1,4 +1,4 @@
-(ns napkindo.names
+(ns algopop.napkindo.names
   (:require [clojure.string :as string]))
 
 (def dictionary

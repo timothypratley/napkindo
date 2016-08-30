@@ -1,9 +1,9 @@
-(ns napkindo.main
+(ns algopop.napkindo.main
   (:require
     [reagent.core :as reagent]
-    [napkindo.firebase :as firebase]
-    [napkindo.model :as model]
-    [napkindo.views.home :as main]
+    [algopop.napkindo.firebase :as firebase]
+    [algopop.napkindo.model :as model]
+    [algopop.napkindo.views.home :as main]
     [devcards.core]
     [goog.events :as events]
     [goog.history.EventType :as EventType])

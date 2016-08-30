@@ -1,9 +1,9 @@
-(ns napkindo.firebase
+(ns algopop.napkindo.firebase
   (:require
     [cljsjs.firebase]
     [cljs.pprint :refer [pprint]]
     [clojure.string :as string]
-    [napkindo.db :as db]
+    [algopop.napkindo.db :as db]
     [reagent.core :as reagent]
     [reagent.ratom :as ratom]
     [cljs.test]

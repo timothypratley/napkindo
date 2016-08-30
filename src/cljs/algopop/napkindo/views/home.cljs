@@ -1,12 +1,13 @@
-(ns napkindo.views.home
+(ns algopop.napkindo.views.home
   (:require
-    [napkindo.db :as db]
-    [napkindo.firebase :as firebase]
-    [napkindo.views.login :as login]
-    [napkindo.views.d3 :as d3]
-    [napkindo.views.draw :as draw]
-    [napkindo.views.gallery :as gallery]
-    [napkindo.views.text-entry :as text-entry]
+    [algopop.napkindo.db :as db]
+    [algopop.napkindo.firebase :as firebase]
+    [algopop.napkindo.names :as names]
+    [algopop.napkindo.views.login :as login]
+    [algopop.napkindo.views.d3 :as d3]
+    [algopop.napkindo.views.draw :as draw]
+    [algopop.napkindo.views.gallery :as gallery]
+    [algopop.napkindo.views.text-entry :as text-entry]
     [clojure.string :as string]
     [reagent.core :as reagent]
     [bidi.bidi :as bidi]
@@ -76,7 +77,7 @@
     m))
 
 (defn draw-view [{:keys [id]}]
-  (if-let [uid (:uid @firebase/user)]
+  (if-let [uid (:uid @firebase/user "anonymous")]
     (if (= id "new")
       (do
         ;; TODO: don't wait for result back for new drawings, work offline
@@ -93,7 +94,7 @@
                   (fn [snapshot]
                     (reset! drawing
                             (merge {:svg []
-                                    :title (napkindo.names/sketch-name)}
+                                    :title (names/sketch-name)}
                                    (-> (.val snapshot)
                                        (js->clj :keywordize-keys true)
                                        (maybe-update :svg edn/read-string)))))))]

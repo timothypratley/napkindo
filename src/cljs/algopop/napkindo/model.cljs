@@ -1,4 +1,4 @@
-(ns napkindo.model
+(ns algopop.napkindo.model
   (:require [reagent.core :as reagent]))
 
 (defonce app-state

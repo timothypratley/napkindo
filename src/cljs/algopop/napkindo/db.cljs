@@ -1,6 +1,6 @@
-(ns napkindo.db
+(ns algopop.napkindo.db
   (:require
-    [napkindo.combinatorics :as combinatorics]
+    [algopop.napkindo.combinatorics :as combinatorics]
     [cljs.tools.reader.edn :as edn]
     [reagent.core :as reagent]
     [posh.reagent :refer [pull q posh! transact!]]

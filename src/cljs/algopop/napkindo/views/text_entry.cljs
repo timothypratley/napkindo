@@ -1,8 +1,8 @@
-(ns napkindo.views.text-entry
+(ns algopop.napkindo.views.text-entry
   (:require
     [goog.dom.forms :as forms]
-    [napkindo.firebase :as firebase]
-    [napkindo.db :as db])
+    [algopop.napkindo.firebase :as firebase]
+    [algopop.napkindo.db :as db])
   (:import
     [goog.structs Map]))
 

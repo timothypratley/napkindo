@@ -1,10 +1,10 @@
-(ns napkindo.views.gallery
+(ns algopop.napkindo.views.gallery
   (:require
     [reagent.core :as reagent]
-    [napkindo.views.draw :as draw]
+    [algopop.napkindo.views.draw :as draw]
     [devcards.core]
-    [napkindo.firebase :as firebase]
-    [napkindo.views.d3 :as d3]
+    [algopop.napkindo.firebase :as firebase]
+    [algopop.napkindo.views.d3 :as d3]
     [clojure.string :as string]
     [cljs.tools.reader.edn :as edn])
   (:require-macros

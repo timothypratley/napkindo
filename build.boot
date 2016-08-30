@@ -37,7 +37,7 @@
 (deftask development []
   (task-options! cljs {:optimizations :none
                        :source-map true}
-                 reload {:on-jsload 'napkindo.main/render})
+                 reload {:on-jsload 'algopop.napkindo.main/render})
   identity)
 
 (deftask dev

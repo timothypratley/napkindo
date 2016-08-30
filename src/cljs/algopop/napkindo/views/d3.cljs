@@ -1,4 +1,4 @@
-(ns napkindo.views.d3
+(ns algopop.napkindo.views.d3
   (:require
     [cljsjs.d3]
     [clojure.string :as string]

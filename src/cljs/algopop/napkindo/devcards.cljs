@@ -1,8 +1,8 @@
-(ns napkindo.devcards
+(ns algopop.napkindo.devcards
   (:require
     [devcards.core]
-    [napkindo.main]
-    [napkindo.firebase :as firebase])
+    [algopop.napkindo.main]
+    [algopop.napkindo.firebase :as firebase])
   (:require-macros
     [devcards.core :refer [start-devcard-ui! defcard-rg]]))
 

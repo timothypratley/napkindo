@@ -1,6 +1,6 @@
-(ns napkindo.views.login
+(ns algopop.napkindo.views.login
   (:require
-    [napkindo.firebase :as firebase]
+    [algopop.napkindo.firebase :as firebase]
     [devcards.core])
   (:require-macros
     [devcards.core :refer [defcard-rg]]))
