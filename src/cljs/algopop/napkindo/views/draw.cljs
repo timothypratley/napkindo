@@ -1,11 +1,9 @@
 (ns algopop.napkindo.views.draw
   (:require
     [reagent.core :as reagent]
-    [algopop.napkindo.names :as names]
     [devcards.core]
     [clojure.string :as string]
-    [cljs.tools.reader.edn :as edn]
-    [algopop.napkindo.model :as model])
+    [cljs.tools.reader.edn :as edn])
   (:require-macros
     [devcards.core :refer [defcard-rg]]))
 
@@ -42,7 +40,27 @@
     (let [touch (aget e "targetTouches" 0)]
       (f touch))))
 
-(defn a-draw [drawing img mode select drag dropped start-path continue-path end-path]
+(defn new-state [{:keys [index values] :as history} value]
+  (if (<= (dec (count values)) index)
+    (-> history
+        (update :index inc)
+        (update :values conj value))
+    (-> history
+        (update :values assoc index value)
+        (update :values subvec 0 (inc index)))))
+
+(defn undo [{:keys [index values] :as history}]
+  (cond-> history
+    (pos? index) (update :index dec)))
+
+(defn redo [{:keys [index values] :as history}]
+  (cond-> history
+    (< index (dec (count values))) (update :index inc)))
+
+(defn current [{:keys [index values] :as history}]
+  (values index))
+
+(defn a-draw [drawing history img mode select drag dropped start-path continue-path end-path save]
   (when @drawing
     [:div
      [:div
@@ -106,6 +124,7 @@
      [:input {:type "text"
               :style {:width "100%"}
               :default-value (:title @drawing)
+              :on-blur save
               :on-change
               (fn title-changed [e]
                 (swap! drawing assoc :title (.. e -target -value)))}]
@@ -146,10 +165,16 @@
           {:title "Background"}
           [:i.material-icons "image"]]])
       [:span.mdl-button.mdl-button--icon
-       {:title "Undo"}
+       {:title "Undo"
+        :on-click
+        (fn undo-click [e]
+          (reset! drawing (current (swap! history undo))))}
        [:i.material-icons "undo"]]
       [:span.mdl-button.mdl-button--icon
-       {:title "Redo"}
+       {:title "Redo"
+        :on-click
+        (fn redo-click [e]
+          (reset! drawing (current (swap! history redo))))}
        [:i.material-icons "redo"]]
       [:span.mdl-button.mdl-button--icon
        {:title "New"
@@ -161,12 +186,20 @@
       {:rows 5
        :style {:width "100%"}
        :default-value (:notes @drawing)
+       :on-blur save
        :on-change
        (fn notes-entered [e]
          (swap! drawing assoc :notes (.. e -target -value)))}]]))
 
 (defn draw [drawing save]
-  (let [img (reagent/atom nil)
+  ;; TODO: intial state should be set, but can't deref drawing hmmmm.
+  ;; also should probably save after undo/redo?
+  (let [history (atom {:index -1
+                       :values []})
+        save (fn []
+               (swap! history new-state @drawing)
+               (save))
+        img (reagent/atom nil)
         pen-down? (reagent/atom false)
         mode (reagent/atom ::draw)
         selected (reagent/atom nil)
@@ -198,7 +231,7 @@
         dropped
         (fn [e]
           (prn "dropped"))]
-    [a-draw drawing img mode select drag dropped start-path continue-path end-path]))
+    [a-draw drawing history img mode select drag dropped start-path continue-path end-path save]))
 
 (defcard-rg draw-card
   [draw (reagent/atom {:svg []}) nil])
