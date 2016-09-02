@@ -27,7 +27,7 @@
         (build)))
 
 (deftask production []
-  (task-options! cljs {:optimizations :advanced
+  (task-options! cljs {:optimizations :whitespace
                        :source-map true})
   identity)
 

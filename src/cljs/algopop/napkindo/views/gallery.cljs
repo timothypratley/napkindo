@@ -81,7 +81,7 @@
            :notes "some other notes"}}])
 
 (defn my-gallery [params]
-  (when-let [uid (:uid @firebase/user)]
+  (if-let [uid (:uid @firebase/user)]
     [firebase/on ["users" uid "drawings"]
      (fn [drawings]
        (let [drawings (js->clj @drawings)
@@ -94,7 +94,8 @@
               [[uid id] {:svg (edn/read-string svg)
                          :title title
                          :notes notes
-                         :created (js/Date. created)}]))]))]))
+                         :created (js/Date. created)}]))]))]
+    [:h4 "Sign in (top right corner) to see your gallery."]))
 
 (defn all-gallery [params]
   [firebase/on ["users"]

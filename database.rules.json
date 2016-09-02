@@ -8,6 +8,11 @@
       "$uid": {
         ".write": "$uid === auth.uid"
       }
+    },
+    "users": {
+      "anonymous": {
+        ".write": "$uid === auth.uid"
+      }
     }
   }
 }
