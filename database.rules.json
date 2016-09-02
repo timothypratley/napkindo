@@ -11,7 +11,7 @@
     },
     "users": {
       "anonymous": {
-        ".write": "$uid === auth.uid"
+        ".write": true
       }
     }
   }
