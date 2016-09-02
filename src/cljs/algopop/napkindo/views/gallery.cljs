@@ -1,16 +1,32 @@
 (ns algopop.napkindo.views.gallery
   (:require
-    [devcards.core]
     [algopop.napkindo.firebase :as firebase]
     [algopop.napkindo.model :as model]
-    [algopop.napkindo.views.d3 :as d3]
     [algopop.napkindo.views.draw :as draw]
     [cljs.tools.reader.edn :as edn]
-    [clojure.string :as string])
+    [clojure.string :as string]
+    [devcards.core]
+    [goog.crypt :as crypt])
   (:require-macros
-    [devcards.core :refer [defcard-rg]]))
+    [devcards.core :refer [defcard-rg]])
+  (:import
+    (goog.crypt Md5)))
 
-(defn card [uid id {:keys [svg title notes created]}]
+(defn color-for [uid]
+  (let [h (hash uid)]
+    [(bit-and 0xff h)
+     (bit-and 0xff (bit-shift-right h 8))
+     (bit-and 0xff (bit-shift-right h 16))]))
+
+(defn rgb [[r g b]]
+  (str "rgb(" r "," g "," b ")"))
+
+(defn md5-hash [s]
+  (let [md5 (Md5.)]
+    (.update md5 (string/trim s))
+    (crypt/byteArrayToHex (.digest md5))))
+
+(defn card [uid id {:keys [svg title notes created owner]}]
   [:span.mdl-card.mdl-shadow--2dp
    {:style {:display "inline-block"
             :width "256px"}}
@@ -24,14 +40,21 @@
    [:div.mdl-card__actions
     {:style {:height "52px"
              :padding "16px"
-             :background (d3/rgb (d3/color-for uid))}}
+             :background (rgb (color-for uid))}}
     (when-let [me (:uid @firebase/user)]
-      (when (= me uid)
+      (if (= me uid)
         [:span.mdl-button.mdl-button--icon
          {:on-click
           (fn [e]
             (firebase/delete ["users" me "drawings" id]))}
-         [:i.material-icons "\uE872"]]))
+         [:i.material-icons "\uE872"]]
+        (let [photo (or (get-in owner ["settings" "photo-url"])
+                        (str "//www.gravatar.com/avatar/" (md5-hash uid) "?d=wavatar"))]
+          [:span.mdl-button.mdl-button--fab.mdl-button--mini-fab
+           {:title (get-in owner "[settings  display-name" "")
+            :style {:background-image (str "url(" photo ")")
+                    :background-size "cover"
+                    :background-repeat "no-repeat"}}])))
     [:div.mdl-card__menu
      [:button.mdl-button.mdl-button--icon
       [:i.material-icons "share"]]]]])
@@ -82,8 +105,9 @@
                 :when (map? drawings)
                 [id {:strs [svg title notes created]}] drawings
                 :when (or (string/blank? search) (re-find (re-pattern (str "(?i)" search))
-                                                          (str (get user "display-name") title notes created)))]
+                                                          (str (get-in user ["settings" "display-name"]) title notes created)))]
             [[uid id] {:svg (edn/read-string svg)
+                       :owner user
                        :title title
                        :notes notes
                        :created (js/Date. created)}])))])])

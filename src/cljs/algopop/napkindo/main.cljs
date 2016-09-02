@@ -3,7 +3,7 @@
     [reagent.core :as reagent]
     [algopop.napkindo.firebase :as firebase]
     [algopop.napkindo.model :as model]
-    [algopop.napkindo.views.home :as main]
+    [algopop.napkindo.views.root :as main]
     [devcards.core]
     [goog.events :as events]
     [goog.history.EventType :as EventType])
@@ -30,7 +30,7 @@
 (defn render []
   (when-let [element (.getElementById js/document "container")]
     (reagent/render-component
-      [main/home model/app-state]
+      [main/root model/app-state]
       element)))
 
 (defn navigation [event]

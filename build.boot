@@ -6,12 +6,9 @@
                  [pandeiro/boot-http        "0.7.3"      :scope "test"]
                  [org.clojure/clojure "1.9.0-alpha11"]
                  [org.clojure/clojurescript "1.9.227"]
-                 [datascript "0.15.2"]
-                 [posh "0.5.4"]
                  [reagent "0.6.0-rc"]
                  [devcards "0.2.1-7"]
                  [bidi "2.0.9"]
-                 [cljsjs/d3 "3.5.16-0"]
                  [cljsjs/firebase "3.3.0-0"]])
 
 (require
@@ -30,7 +27,7 @@
         (build)))
 
 (deftask production []
-  (task-options! cljs {:optimizations :whitespace
+  (task-options! cljs {:optimizations :advanced
                        :source-map true})
   identity)
 
