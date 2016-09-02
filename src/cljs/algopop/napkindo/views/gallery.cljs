@@ -51,7 +51,7 @@
         (let [photo (or (get-in owner ["settings" "photo-url"])
                         (str "//www.gravatar.com/avatar/" (md5-hash uid) "?d=wavatar"))]
           [:span.mdl-button.mdl-button--fab.mdl-button--mini-fab
-           {:title (get-in owner "[settings  display-name" "")
+           {:title (get-in owner ["settings" "display-name"])
             :style {:cursor "default"
                     :background-image (str "url(" photo ")")
                     :background-size "cover"
