@@ -7,9 +7,7 @@
     "users": {
       "$uid": {
         ".write": "$uid === auth.uid"
-      }
-    },
-    "users": {
+      },
       "anonymous": {
         ".write": true
       }
