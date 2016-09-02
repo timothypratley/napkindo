@@ -41,7 +41,7 @@
     {:style {:height "52px"
              :padding "16px"
              :background (rgb (color-for uid))}}
-    (when-let [me (:uid @firebase/user)]
+    (let [me (:uid @firebase/user "anonymous")]
       (if (= me uid)
         [:span.mdl-button.mdl-button--icon
          {:on-click

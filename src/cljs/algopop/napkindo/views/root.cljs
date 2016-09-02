@@ -57,7 +57,8 @@
      [:ul {:style {:list-style "none"}}
       [:li "Draw your ideas as you think them."]
       [:li "Ideas are saved in the cloud."]
-      [:li "Share and browse."]]]
+      [:li "Share and browse."]]
+     [:em "Everyone is born creative. Everyone is given a box of crayons in kindergarten. -- Hugh MacLeod"]]
     [:div.mdl_card__action.mdl-card--border
      [:a.mdl-button.mdl-button--colored
       {:href "#/draw/new"}
