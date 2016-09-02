@@ -1,12 +1,12 @@
 (ns algopop.napkindo.views.gallery
   (:require
-    [reagent.core :as reagent]
-    [algopop.napkindo.views.draw :as draw]
     [devcards.core]
     [algopop.napkindo.firebase :as firebase]
+    [algopop.napkindo.model :as model]
     [algopop.napkindo.views.d3 :as d3]
-    [clojure.string :as string]
-    [cljs.tools.reader.edn :as edn])
+    [algopop.napkindo.views.draw :as draw]
+    [cljs.tools.reader.edn :as edn]
+    [clojure.string :as string])
   (:require-macros
     [devcards.core :refer [defcard-rg]]))
 
@@ -55,19 +55,38 @@
            :title "title3"
            :notes "some other notes"}}])
 
+(defn my-gallery [params]
+  (when-let [uid (:uid @firebase/user)]
+    [firebase/on ["users" uid "drawings"]
+     (fn [drawings]
+       (let [drawings (js->clj @drawings)
+             search (:search @model/app-state)]
+         [gallery
+          (doall
+            (for [[id {:strs [svg title notes created]}] drawings
+                  :when (or (string/blank? search) (re-find (re-pattern (str "(?i)" search))
+                                                            (str title notes created)))]
+              [[uid id] {:svg (edn/read-string svg)
+                         :title title
+                         :notes notes
+                         :created (js/Date. created)}]))]))]))
+
 (defn all-gallery [params]
   [firebase/on ["users"]
    (fn [users]
      [gallery
-      (doall
-        (for [[uid user] (js->clj @users)
-              :let [drawings (get user "drawings")]
-              :when (map? drawings)
-              [id {:strs [svg title notes created]}] drawings]
-          [[uid id] {:svg (edn/read-string svg)
-                     :title title
-                     :notes notes
-                     :created (js/Date. created)}]))])])
+      (let [search (:search @model/app-state)]
+        (doall
+          (for [[uid user] (js->clj @users)
+                :let [drawings (get user "drawings")]
+                :when (map? drawings)
+                [id {:strs [svg title notes created]}] drawings
+                :when (or (string/blank? search) (re-find (re-pattern (str "(?i)" search))
+                                                          (str (get user "display-name") title notes created)))]
+            [[uid id] {:svg (edn/read-string svg)
+                       :title title
+                       :notes notes
+                       :created (js/Date. created)}])))])])
 
 (defcard-rg all-gallery-card
   all-gallery)

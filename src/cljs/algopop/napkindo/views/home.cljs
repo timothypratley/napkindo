@@ -2,6 +2,7 @@
   (:require
     [algopop.napkindo.db :as db]
     [algopop.napkindo.firebase :as firebase]
+    [algopop.napkindo.model :as model]
     [algopop.napkindo.names :as names]
     [algopop.napkindo.views.login :as login]
     [algopop.napkindo.views.d3 :as d3]
@@ -188,29 +189,29 @@
 (defn view-drawing [{:keys [uid id]}]
   [firebase/on ["users" uid "drawings" id] draw/observe])
 
-(def links
-  {"gallery" gallery/all-gallery
-   ["view" "/" :uid "/" :id] view-drawing
-   ["draw" "/" :id] draw-view
-   "graph" graph-edit
-   "about" about})
-
 (def routes
   [""
-   [["/" links]
+   [["/" {"gallery" gallery/all-gallery
+          "my-gallery" gallery/my-gallery
+          ["view" "/" :uid "/" :id] view-drawing
+          ["draw" "/" :id] draw-view
+          "graph" graph-edit
+          "about" about}]
     [true gallery/all-gallery]]])
 
 (defn navbar [handler]
   (let [anchors
         (doall
-          (for [[p h] links
+          (for [[p h params] [["New" draw-view [:id "new"]]
+                              ["Mine" gallery/my-gallery]
+                              ["Everyone's" gallery/all-gallery]]
                 :let [title (string/capitalize
                               (if (sequential? p)
                                 (first p)
                                 p))]]
-            [:a.mdl-navigation__link
+            [:a.mdl-navigation__link.mdl-button.mdl-button--raise.mdl-button--accent
              {:key title
-              :href (str "#" (bidi/path-for routes h :id "new" :uid "none"))
+              :href (str "#" (apply bidi/path-for routes h params))
               :style {:margin-right "15px"
                       :box-shadow (when (= h handler)
                                     "inset 0 -10px 10px -10px #FF0000")}}
@@ -221,6 +222,11 @@
       [:div.mdl-layout-spacer]
       [:nav                                                 ;;.mdl-navigation.mdl-layout--large-screen-only
        anchors
+       [:label.mdl-navigation__link.mdl-button.mdl-button-raise.mdl-button-accent "Search "
+        [:input {:type "text"
+                 :on-change
+                 (fn [e]
+                   (model/set-search! (.. e -target -value)))}]]
        [login/login-view]]]]))
 
 (defn home [app-state]
