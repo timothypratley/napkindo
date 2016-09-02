@@ -52,11 +52,13 @@
                         (str "//www.gravatar.com/avatar/" (md5-hash uid) "?d=wavatar"))]
           [:span.mdl-button.mdl-button--fab.mdl-button--mini-fab
            {:title (get-in owner "[settings  display-name" "")
-            :style {:background-image (str "url(" photo ")")
+            :style {:cursor "default"
+                    :background-image (str "url(" photo ")")
                     :background-size "cover"
                     :background-repeat "no-repeat"}}])))
     [:div.mdl-card__menu
-     [:button.mdl-button.mdl-button--icon
+     [:a.mdl-button.mdl-button--icon
+      {:href (str (if (= uid (:uid @firebase/user)) "#/draw/" (str "#/view/" uid "/")) id)}
       [:i.material-icons "share"]]]]])
 
 (defn gallery [drawings]

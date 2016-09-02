@@ -48,19 +48,24 @@
     [:h2 "Must be logged in to draw"]))
 
 (defn home [params]
-  [:div.mdl-card.mdl-shadow--2dp
-   {:style {:width "80%"}}
-   [:div.mdl-card__title
-    [:h2.mdl-card__title-text "Welcome"]]
-   [:div.mdl-card__supporting-text
-    [:ul {:style {:list-style "none"}}
-     [:li "Draw your ideas as you think them."]
-     [:li "Ideas are saved in the cloud."]
-     [:li "Share and browse."]]]
-   [:div.mdl_card__action.mdl-card--border
-    [:a.mdl-button.mdl-button--colored
-     {:href "#/draw/new"}
-     "Get Started"]]])
+  [:div
+   [:div.mdl-card.mdl-shadow--2dp
+    {:style {:width "100%"}}
+    [:div.mdl-card__title
+     [:h2.mdl-card__title-text "Welcome"]]
+    [:div.mdl-card__supporting-text
+     [:ul {:style {:list-style "none"}}
+      [:li "Draw your ideas as you think them."]
+      [:li "Ideas are saved in the cloud."]
+      [:li "Share and browse."]]]
+    [:div.mdl_card__action.mdl-card--border
+     [:a.mdl-button.mdl-button--colored
+      {:href "#/draw/new"}
+      "Get Started"]]]
+   [:center
+    "Please send me feedback: "
+    [:a {:href "mailto:timothypratley@gmail.com"}
+     "timothypratley@gmail.com"]]])
 
 (defn about [params]
   [:div "Todo: write an about"])
