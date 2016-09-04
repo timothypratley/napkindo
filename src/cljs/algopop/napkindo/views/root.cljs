@@ -51,27 +51,32 @@
 
 (defn home [params]
   [:div
-   [:div.mdl-card.mdl-shadow--2dp
-    {:style {:width "100%"}}
-    [:div.mdl-card__title
-     [:h2.mdl-card__title-text "Welcome"]]
-    [:div.mdl-card__supporting-text
-     [:ul {:style {:list-style "none"}}
-      [:li "Draw your ideas as you think them."]
-      [:li "Ideas are saved in the cloud."]
-      [:li "Share and browse."]]
-     [:em "\"Everyone is born creative. Everyone is given a box of crayons in kindergarten.\""]
-     " -- Hugh MacLeod"]
-    [:div.mdl_card__action.mdl-card--border
-     [:a.mdl-button.mdl-button--colored
-      {:href "#/draw/new"
-       :style {:box-shadow "inset -1px -1px 0 #3f51b5"
-               :border-radius "20px"}}
-      "Get Started"]]]
-   [:center
-    "Please send me feedback: "
-    [:a {:href "mailto:timothypratley@gmail.com"}
-     "timothypratley@gmail.com"]]])
+   [:div.mdl-grid
+    [:div.mdl-cell.mdl-cell--6-col
+     [:div.mdl-card.mdl-shadow--2dp
+      {:style {:width "100%"}}
+      [:div.mdl-card__title
+       [:h2.mdl-card__title-text "Welcome"]]
+      [:div.mdl-card__supporting-text
+       [:ul {:style {:list-style "none"}}
+        [:li "Draw your ideas as you think them."]
+        [:li "Ideas are saved in the cloud."]
+        [:li "Share and browse."]]
+       [:em "\"Everyone is born creative. Everyone is given a box of crayons in kindergarten.\""]
+       " -- Hugh MacLeod"]
+      [:div.mdl_card__action.mdl-card--border
+       [:a.mdl-button.mdl-button--colored
+        {:href "#/draw/new"
+         :style {:box-shadow "inset -1px -1px 0 #3f51b5"
+                 :border-radius "20px"}}
+        "Get Started"]]]
+     [:center
+      "Please send me feedback: "
+      [:a {:href "mailto:timothypratley@gmail.com"}
+       "timothypratley@gmail.com"]]]
+    [:div.mdl-cell.mdl-cell--6-col
+     [:img {:src "napkindo.gif"
+            :style {:width "100%"}}]]]])
 
 (defn view-drawing [{:keys [uid id]}]
   [firebase/on ["users" uid "drawings" id] draw/observe])
