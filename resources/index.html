@@ -1,28 +1,36 @@
 <!doctype html>
 <html>
 <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="">
-    <title>Napkindo</title>
-    <link href="favicon.ico" rel="shortcut icon" type="image/x-icon">
-    <link href="https://fonts.googleapis.com/css?family=Coming+Soon|Material+Icons" rel="stylesheet">
-    <link href="https://code.getmdl.io/1.1.3/material.indigo-pink.min.css" rel="stylesheet">
-    <meta name="google-signin-client_id"
-          content="465252224890-1fv309d7pj45gec9gjpupk92jcanqk4i.apps.googleusercontent.com">
-    <meta name="google-signin-cookiepolicy" content="single_host_origin">
-    <meta name="google-signin-scope" content="profile email">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="">
+  <title>Napkindo</title>
+  <link href="favicon.ico" rel="shortcut icon" type="image/x-icon">
+  <link href="https://fonts.googleapis.com/css?family=Coming+Soon|Material+Icons" rel="stylesheet">
+  <link href="https://code.getmdl.io/1.1.3/material.indigo-pink.min.css" rel="stylesheet">
+  <meta name="google-signin-client_id"
+        content="465252224890-1fv309d7pj45gec9gjpupk92jcanqk4i.apps.googleusercontent.com">
+  <meta name="google-signin-cookiepolicy" content="single_host_origin">
+  <meta name="google-signin-scope" content="profile email">
 </head>
 <body>
 <div style="padding-left:20px;padding-right:20px;font-family:Coming Soon">
-    <a href="/#/" style="text-decoration:none">
-        <em><h5 style="display:inline-block;font-family:Coming Soon">Napkin</h5></em>
-        <img src="brand.png" style="height:50px">
-    </a>
-    <em style="margin-left:20px">Sketch it out for me</em>
-    <div class="g-signin2" data-onsuccess="onSignIn" style="float:right"></div>
+  <a href="/#/" style="text-decoration:none">
+    <em><h5 style="display:inline-block;font-family:Coming Soon">Napkin</h5></em>
+    <img src="brand.png" style="height:50px">
+  </a>
+  <em style="margin-left:20px">Sketch it out for me</em>
+  <div class="g-signin2" data-onsuccess="onSignIn" style="float:right"></div>
 </div>
 <div id="container" style="padding-left:20px;padding-right:20px">Loading...</div>
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+  ga('create', 'UA-40336415-6', 'auto');
+  ga('send', 'pageview');
+</script>
 <script src="js/app.js"></script>
 <script> function onSignIn(googleUser) { algopop.napkindo.firebase.onSignIn(googleUser); } </script>
 <script src="https://apis.google.com/js/platform.js" async defer></script>
