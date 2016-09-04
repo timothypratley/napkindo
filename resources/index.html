@@ -6,22 +6,23 @@
     <meta name="description" content="">
     <title>Napkindo</title>
     <link href="favicon.ico" rel="shortcut icon" type="image/x-icon">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
-    <link rel="stylesheet" href="https://code.getmdl.io/1.1.3/material.indigo-pink.min.css">
+    <link href="https://fonts.googleapis.com/css?family=Coming+Soon|Material+Icons" rel="stylesheet">
+    <link href="https://code.getmdl.io/1.1.3/material.indigo-pink.min.css" rel="stylesheet">
     <meta name="google-signin-client_id"
           content="465252224890-1fv309d7pj45gec9gjpupk92jcanqk4i.apps.googleusercontent.com">
     <meta name="google-signin-cookiepolicy" content="single_host_origin">
     <meta name="google-signin-scope" content="profile email">
 </head>
 <body>
-<div>
-    <h5 style="font-family:fantasy;display:inline-block;">Napkin</h5>
-    <img src="brand.png"
-         style="height:50px; margin-right:20px; border-radius:5px;">
-    <em style="font-family:fantasy">Sketch it out for me</em>
+<div style="padding-left:20px;padding-right:20px;font-family:Coming Soon">
+    <a href="/#/" style="text-decoration:none">
+        <em><h5 style="display:inline-block;font-family:Coming Soon">Napkin</h5></em>
+        <img src="brand.png" style="height:50px">
+    </a>
+    <em style="margin-left:20px">Sketch it out for me</em>
     <div class="g-signin2" data-onsuccess="onSignIn" style="float:right"></div>
 </div>
-<div id="container">Loading...</div>
+<div id="container" style="padding-left:20px;padding-right:20px">Loading...</div>
 <script src="js/app.js"></script>
 <script> function onSignIn(googleUser) { algopop.napkindo.firebase.onSignIn(googleUser); } </script>
 <script src="https://apis.google.com/js/platform.js" async defer></script>

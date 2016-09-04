@@ -27,17 +27,19 @@
              (set! js/window.location.hash))
         [:p "Loading..."])
       ;; TODO: is this just firebase/once now?
-      (let [drawing (reagent/atom nil)
+      (let [drawing (reagent/atom {:svg []
+                                   :title (names/sketch-name)})
             r (doto (firebase/db-ref ["users" uid "drawings" id])
                 (.once
                   "value"
-                  (fn [snapshot]
-                    (reset! drawing
-                            (merge {:svg []
-                                    :title (names/sketch-name)}
-                                   (-> (.val snapshot)
-                                       (js->clj :keywordize-keys true)
-                                       (maybe-update :svg edn/read-string)))))))]
+                  (fn success [snapshot]
+                    ;; TODO: make this a non-destructive merge
+                    (swap! drawing merge
+                           (-> (.val snapshot)
+                               (js->clj :keywordize-keys true)
+                               (maybe-update :svg edn/read-string))))
+                  (fn failure [error]
+                    (js/alert "Connection failure:" error))))]
         [draw/draw
          drawing
          (fn save-drawing []
@@ -58,18 +60,18 @@
       [:li "Draw your ideas as you think them."]
       [:li "Ideas are saved in the cloud."]
       [:li "Share and browse."]]
-     [:em "Everyone is born creative. Everyone is given a box of crayons in kindergarten. -- Hugh MacLeod"]]
+     [:em "\"Everyone is born creative. Everyone is given a box of crayons in kindergarten.\""]
+     " -- Hugh MacLeod"]
     [:div.mdl_card__action.mdl-card--border
      [:a.mdl-button.mdl-button--colored
-      {:href "#/draw/new"}
+      {:href "#/draw/new"
+       :style {:box-shadow "inset -1px -1px 0 #3f51b5"
+               :border-radius "20px"}}
       "Get Started"]]]
    [:center
     "Please send me feedback: "
     [:a {:href "mailto:timothypratley@gmail.com"}
      "timothypratley@gmail.com"]]])
-
-(defn about [params]
-  [:div "Todo: write an about"])
 
 (defn view-drawing [{:keys [uid id]}]
   [firebase/on ["users" uid "drawings" id] draw/observe])
@@ -80,45 +82,51 @@
           "gallery" gallery/all-gallery
           "my-gallery" gallery/my-gallery
           ["view" "/" :uid "/" :id] view-drawing
-          ["draw" "/" :id] draw-view
-          "about" about}]
-    [true gallery/all-gallery]]])
+          ["draw" "/" :id] draw-view}]
+    [true home]]])
 
 (defn navbar [handler]
   (let [anchors
         (doall
           (for [[p h params] [["Home" home]
-                              ["New" draw-view [:id "new"]]
-                              ["Mine" gallery/my-gallery]
-                              ["Everyone's" gallery/all-gallery]]
+                              ["Everyone's" gallery/all-gallery]
+                              ["Mine" gallery/my-gallery]]
                 :let [title (string/capitalize
                               (if (sequential? p)
                                 (first p)
                                 p))]]
-            [:a.mdl-navigation__link.mdl-button.mdl-button--raise.mdl-button--accent
+            [:a.mdl-navigation__link.mdl-button.mdl-button--accent
              {:key title
               :href (str "#" (apply bidi/path-for routes h params))
-              :style {:margin-right "15px"
-                      :box-shadow (when (= h handler)
-                                    "inset 0 -10px 10px -10px #FF0000")}}
+              :style {:box-shadow (when (= h handler)
+                                    "inset 0 -3px 0 #ff4081")}}
              title]))]
     ;; TODO: style that works with andriod
     [:header                                                ;;.mdl-layout__header
      [:div                                                  ;;.mdl-layout__header-row
       [:div.mdl-layout-spacer]
       [:nav                                                 ;;.mdl-navigation.mdl-layout--large-screen-only
+       {:style {:border-bottom "1px solid lightgrey"
+                :margin-bottom "20px"}}
        anchors
-       [:label.mdl-navigation__link.mdl-button.mdl-button-raise.mdl-button-accent "Search "
+       [:label.mdl-navigation__link.mdl-button.mdl-button-accent "Search "
         [:input {:type "text"
                  :on-change
                  (fn [e]
                    (model/set-search! (.. e -target -value)))}]]
+       [:a.mdl-navigation__link.mdl-button.mdl-button--colored
+        {:href (str "#" (bidi/path-for routes draw-view :id "new"))
+         :style {:border-radius "20px"
+                 :box-shadow "inset -1px -1px 0 #3f51b5"}}
+        [:i.material-icons "\uE254"]
+        " New"]
        [login/login-view]]]]))
 
 (defn root [app-state]
   (let [{:keys [handler route-params]} (bidi/match-route routes (:route @app-state))]
-    [:div.mdl-layout.mdl-layout--fixed-header
-     [navbar handler]
-     [:main
-      [:section
-       [handler route-params]]]]))
+    [:div
+     [:div.mdl-layout.mdl-layout--fixed-header
+      [navbar handler]
+      [:main
+       [:section
+        [handler route-params]]]]]))

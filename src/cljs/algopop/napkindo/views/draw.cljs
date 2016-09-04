@@ -1,5 +1,6 @@
 (ns algopop.napkindo.views.draw
   (:require
+    [algopop.napkindo.names :as names]
     [reagent.core :as reagent]
     [devcards.core]
     [clojure.string :as string]
@@ -10,12 +11,13 @@
 (def default-dims [400 400])
 
 (defn xy [e [width height]]
-  (let [rect (.getBoundingClientRect (if (exists? (.-currentTarget e))
-                                       (.-currentTarget e)
-                                       (.-target e)))
-        ;; Android old versions don't return the correct rect width/height
-        w (.. e -target -width -baseVal -value)
-        h (.. e -target -height -baseVal -value)]
+  (let [t (if (exists? (.-currentTarget e))
+            (.-currentTarget e)
+            (.-target e))
+        rect (.getBoundingClientRect t)
+        ;; Android old versions don't calculate the correct rect width/height
+        w (.. t -width -baseVal -value)
+        h (.. t -height -baseVal -value)]
     [(-> (- (.-clientX e) (.-left rect))
          (/ w)
          (* width)
@@ -60,136 +62,151 @@
 (defn current [{:keys [index values] :as history}]
   (values index))
 
+(defn toolbar [drawing history mode img]
+  [:div
+   (if (= @mode ::edit)
+     [:button.mdl-button.mdl-button--icon
+      {:title "Draw"
+       :on-click
+       (fn draw-mode [e]
+         (reset! mode ::draw))}
+      [:i.material-icons "\uE3C9"]]
+     [:button.mdl-button.mdl-button--icon
+      {:title "Edit"
+       :on-click
+       (fn edit-mode [e]
+         (reset! mode ::edit))}
+      [:i.material-icons "\uE39E"]])
+   (if @img
+     [:button.mdl-button.mdl-button--icon
+      {:title "Clear Background"
+       :on-click
+       (fn image-off [e]
+         (reset! img nil))}
+      [:i.material-icons "\uE3F4"]]
+     [:label
+      [:input
+       {:type "file"
+        :accept "image/*"
+        :style {:display "none"}
+        :on-change
+        (fn image-selected [e]
+          (let [r (js/FileReader.)]
+            (set! (.-onload r)
+                  (fn [e]
+                    (reset! img (.. e -target -result))))
+            (.readAsDataURL r (aget (.. e -target -files) 0))))}]
+      [:span.mdl-button.mdl-button--icon
+       {:title "Background"}
+       [:i.material-icons "\uE3F4"]]])
+   [:button.mdl-button.mdl-button--icon
+    {:title "Undo"
+     :on-click
+     (fn undo-click [e]
+       (reset! drawing (current (swap! history undo))))}
+    [:i.material-icons "\uE166"]]
+   [:button.mdl-button.mdl-button--icon
+    {:title "Redo"
+     :on-click
+     (fn redo-click [e]
+       (reset! drawing (current (swap! history redo))))}
+    [:i.material-icons "\uE15A"]]
+   [:button.mdl-button.mdl-button--icon
+    {:title "New"
+     :on-click
+     (fn draw-new [e]
+       (set! js/window.location.hash "#/draw/new"))}
+    [:i.material-icons "\uE31B"]]])
+
 (defn a-draw [drawing history img mode select drag dropped start-path continue-path end-path save]
-  (when @drawing
-    [:div
-     [:div
-      ;; http://alistapart.com/article/creating-intrinsic-ratios-for-video
-      {:style {:height 0
-               :padding-bottom "100%"
-               :position "relative"}}
-      [:svg
-       (merge-with
-         merge
-         {:view-box (string/join " " (concat [0 0] (:dims @drawing default-dims)))
-          :style {:position "absolute"
-                  :top 0
-                  :left 0
-                  :width "100%"
-                  :height "100%"
-                  :border "1px solid black"
-                  :-webkit-touch-callout "none"
-                  :-webkit-user-select "none"
-                  :-khtml-user-select "none"
-                  :-moz-user-select "none"
-                  :-ms-user-select "none"
-                  :user-select "none"}}
-         (if (= @mode ::edit)
-           {:style {:cursor "move"}
-            :on-touch-start (one-touch-handler select)
-            :on-mouse-down select
-            :on-mouse-over select
-            :on-touch-move (one-touch-handler drag)
-            :on-mouse-move drag
-            :on-touch-end (one-touch-handler dropped)
-            :on-mouse-up dropped
-            :on-touch-cancel (one-touch-handler dropped)
-            :on-mouse-out dropped}
-           {:style {:cursor "crosshair"}
-            :on-touch-start (one-touch-handler start-path)
-            :on-mouse-down start-path
-            :on-mouse-over start-path
-            :on-touch-move (one-touch-handler continue-path)
-            :on-mouse-move continue-path
-            :on-touch-end (one-touch-handler end-path)
-            :on-mouse-up end-path
-            :on-touch-cancel (one-touch-handler end-path)
-            :on-mouse-out end-path}))
-       (when @img
-         [:image {:xlink-href @img
-                  :width "100%"
-                  :height "100%"
-                  :opacity 0.3}])
-       (into
-         [:g {:fill "none"
-              :style {:pointer-events "none"}
-              :on-touch-start
-              (fn [e] (.preventDefault e))
-              :stroke "black"
-              :stroke-width 5
-              :stroke-linecap "round"
-              :stroke-linejoin "round"}]
-         (for [elem (:svg @drawing)]
-           (prepare elem @mode)))]]
-     [:input {:type "text"
-              :style {:width "100%"}
-              :default-value (:title @drawing)
-              :on-blur save
-              :on-change
-              (fn title-changed [e]
-                (swap! drawing assoc :title (.. e -target -value)))}]
-     [:div
-      (if (= @mode ::edit)
-        [:span.mdl-button.mdl-button--icon
-         {:title "Draw"
-          :on-click
-          (fn draw-mode [e]
-            (reset! mode ::draw))}
-         [:i.material-icons "edit"]]
-        [:span.mdl-button.mdl-button--icon
-         {:title "Edit"
-          :on-click
-          (fn edit-mode [e]
-            (reset! mode ::edit))}
-         [:i.material-icons "adjust"]])
-      (if @img
-        [:span.mdl-button.mdl-button--icon.active
-         {:title "Clear Background"
-          :on-click
-          (fn image-off [e]
-            (reset! img nil))}
-         [:i.material-icons "image"]]
-        [:label
-         [:input
-          {:type "file"
-           :accept "image/*"
-           :style {:display "none"}
-           :on-change
-           (fn image-selected [e]
-             (let [r (js/FileReader.)]
-               (set! (.-onload r)
-                     (fn [e]
-                       (reset! img (.. e -target -result))))
-               (.readAsDataURL r (aget (.. e -target -files) 0))))}]
-         [:span.mdl-button.mdl-button--icon
-          {:title "Background"}
-          [:i.material-icons "image"]]])
-      [:span.mdl-button.mdl-button--icon
-       {:title "Undo"
+  [:div
+   [:div.mdl-grid
+    [:div.mdl-cell.mdl-cell--6-col
+     [toolbar drawing history mode img]]
+    [:div.mdl-cell.mdl-cell--6-col
+     [:label
+      [:button.mdl-button.mdl-button--icon
+       {:style {:float "right"}
         :on-click
-        (fn undo-click [e]
-          (reset! drawing (current (swap! history undo))))}
-       [:i.material-icons "undo"]]
-      [:span.mdl-button.mdl-button--icon
-       {:title "Redo"
-        :on-click
-        (fn redo-click [e]
-          (reset! drawing (current (swap! history redo))))}
-       [:i.material-icons "redo"]]
-      [:span.mdl-button.mdl-button--icon
-       {:title "New"
-        :on-click
-        (fn draw-new [e]
-          (set! js/window.location.hash "#/draw/new"))}
-       [:i.material-icons "\uE31B"]]]
-     [:textarea
-      {:rows 5
-       :style {:width "100%"}
-       :default-value (:notes @drawing)
-       :on-blur save
-       :on-change
-       (fn notes-entered [e]
-         (swap! drawing assoc :notes (.. e -target -value)))}]]))
+        (fn randomize-title [e]
+          (swap! drawing assoc :title (names/sketch-name)))}
+       [:i.material-icons "\uEB40"]]
+      [:span
+       {:style {:display "block"
+                :overflow "hidden"}}
+       [:input.mdl-textfield__input
+        {:type "text"
+         :style {:width "100%"}
+         :value (:title @drawing)
+         :on-blur save
+         :on-change
+         (fn title-changed [e]
+           (swap! drawing assoc :title (.. e -target -value)))}]]]]]
+   [:div
+    ;; http://alistapart.com/article/creating-intrinsic-ratios-for-video
+    {:style {:height 0
+             :border "1px solid black"
+             :padding-bottom "100%"
+             :position "relative"}}
+    [:svg
+     (merge-with
+       merge
+       {:view-box (string/join " " (concat [0 0] (:dims @drawing default-dims)))
+        :style {:position "absolute"
+                :top 0
+                :height "100%"
+                :-webkit-touch-callout "none"
+                :-webkit-user-select "none"
+                :-khtml-user-select "none"
+                :-moz-user-select "none"
+                :-ms-user-select "none"
+                :user-select "none"}}
+       (if (= @mode ::edit)
+         {:style {:cursor "move"}
+          :on-touch-start (one-touch-handler select)
+          :on-mouse-down select
+          :on-mouse-over select
+          :on-touch-move (one-touch-handler drag)
+          :on-mouse-move drag
+          :on-touch-end (one-touch-handler dropped)
+          :on-mouse-up dropped
+          :on-touch-cancel (one-touch-handler dropped)
+          :on-mouse-out dropped}
+         {:style {:cursor "crosshair"}
+          :on-touch-start (one-touch-handler start-path)
+          :on-mouse-down start-path
+          :on-mouse-over start-path
+          :on-touch-move (one-touch-handler continue-path)
+          :on-mouse-move continue-path
+          :on-touch-end (one-touch-handler end-path)
+          :on-mouse-up end-path
+          :on-touch-cancel (one-touch-handler end-path)
+          :on-mouse-out end-path}))
+     (when @img
+       [:image {:xlink-href @img
+                :style {:pointer-events "none"}
+                :width "100%"
+                :height "100%"
+                :opacity 0.3}])
+     (into
+       [:g {:fill "none"
+            :style {:pointer-events "none"}
+            :on-touch-start
+            (fn [e] (.preventDefault e))
+            :stroke "black"
+            :stroke-width 5
+            :stroke-linecap "round"
+            :stroke-linejoin "round"}]
+       (for [elem (:svg @drawing)]
+         (prepare elem @mode)))]]
+   [:textarea
+    {:rows 5
+     :style {:width "100%"}
+     :default-value (:notes @drawing)
+     :on-blur save
+     :on-change
+     (fn notes-entered [e]
+       (swap! drawing assoc :notes (.. e -target -value)))}]])
 
 (defn draw [drawing save]
   ;; TODO: intial state should be set, but can't deref drawing hmmmm.
