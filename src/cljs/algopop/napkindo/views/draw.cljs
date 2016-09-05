@@ -132,24 +132,23 @@
     [:div.mdl-cell.mdl-cell--6-col
      [toolbar drawing history mode img]]
     [:div.mdl-cell.mdl-cell--6-col
-     [:label
-      [:button.mdl-button.mdl-button--icon
-       {:style {:float "right"}
-        :on-click
-        (fn randomize-title [e]
-          (swap! drawing assoc :title (names/sketch-name)))}
-       [:i.material-icons "\uEB40"]]
-      [:span
-       {:style {:display "block"
-                :overflow "hidden"}}
-       [:input.mdl-textfield__input
-        {:type "text"
-         :style {:width "100%"}
-         :value (:title @drawing)
-         :on-blur save
-         :on-change
-         (fn title-changed [e]
-           (swap! drawing assoc :title (.. e -target -value)))}]]]]]
+     [:button.mdl-button.mdl-button--icon
+      {:style {:float "right"}
+       :on-click
+       (fn randomize-title [e]
+         (swap! drawing assoc :title (names/sketch-name)))}
+      [:i.material-icons "\uEB40"]]
+     [:span
+      {:style {:display "block"
+               :overflow "hidden"}}
+      [:input.mdl-textfield__input
+       {:type "text"
+        :style {:width "100%"}
+        :value (:title @drawing)
+        :on-blur save
+        :on-change
+        (fn title-changed [e]
+          (swap! drawing assoc :title (.. e -target -value)))}]]]]
    [:div
     ;; http://alistapart.com/article/creating-intrinsic-ratios-for-video
     {:style {:position "relative"
