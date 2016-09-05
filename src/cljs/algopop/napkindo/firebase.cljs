@@ -4,7 +4,6 @@
     [cljs.pprint :refer [pprint]]
     [clojure.string :as string]
     [reagent.core :as reagent]
-    [reagent.ratom :as ratom]
     [cljs.test]
     [devcards.core]
     [goog.dom.forms :as forms])
@@ -12,7 +11,7 @@
     [devcards.core :refer [defcard-rg]]))
 
 (def timestamp
-  js/firebase.database.ServerValue.TIMESTAMP)
+  (aget js/firebase.database.ServerValue "TIMESTAMP"))
 
 (defn db-ref [path]
   (.ref (js/firebase.database) (string/join "/" path)))

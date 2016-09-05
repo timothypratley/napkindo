@@ -93,7 +93,7 @@
 (defn navbar [handler]
   (let [anchors
         (doall
-          (for [[p h params] [["Home" home]
+          (for [[p h] [["Home" home]
                               ["Everyone's" gallery/all-gallery]
                               ["Mine" gallery/my-gallery]]
                 :let [title (string/capitalize
@@ -102,15 +102,15 @@
                                 p))]]
             [:a.mdl-navigation__link.mdl-button.mdl-button--accent
              {:key title
-              :href (str "#" (apply bidi/path-for routes h params))
+              :href (str "#" (bidi/path-for routes h))
               :style {:box-shadow (when (= h handler)
                                     "inset 0 -3px 0 #ff4081")}}
              title]))]
-    ;; TODO: style that works with andriod
-    [:header                                                ;;.mdl-layout__header
-     [:div                                                  ;;.mdl-layout__header-row
+    ;; TODO: improve small screen styling
+    [:header
+     [:div
       [:div.mdl-layout-spacer]
-      [:nav                                                 ;;.mdl-navigation.mdl-layout--large-screen-only
+      [:nav
        {:style {:border-bottom "1px solid lightgrey"
                 :margin-bottom "20px"}}
        anchors

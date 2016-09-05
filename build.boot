@@ -9,7 +9,8 @@
                  [reagent "0.6.0-rc"]
                  [devcards "0.2.1-7"]
                  [bidi "2.0.9"]
-                 [cljsjs/firebase "3.3.0-0"]])
+                 [cljsjs/firebase "3.3.0-0"]
+                 [cljsjs/google-platformjs-extern "1.0.0-0"]])
 
 (require
  '[adzerk.boot-cljs      :refer [cljs]]
@@ -27,7 +28,7 @@
         (build)))
 
 (deftask production []
-  (task-options! cljs {:optimizations :whitespace
+  (task-options! cljs {:optimizations :advanced
                        :source-map true})
   identity)
 

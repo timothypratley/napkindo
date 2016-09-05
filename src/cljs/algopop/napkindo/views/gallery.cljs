@@ -5,8 +5,7 @@
     [algopop.napkindo.views.draw :as draw]
     [cljs.tools.reader.edn :as edn]
     [clojure.string :as string]
-    [devcards.core]
-    [goog.crypt :as crypt])
+    [devcards.core])
   (:require-macros
     [devcards.core :refer [defcard-rg]])
   (:import
@@ -21,10 +20,21 @@
 (defn rgb [[r g b]]
   (str "rgb(" r "," g "," b ")"))
 
+(defn bytes-to-hex
+  "Replaces crypt/bytesToHex which doesn't work with advanced compilation."
+  [a]
+  (string/join
+    (map #(let [hex (.toString % 16)]
+           (if (= (count hex) 1)
+             (str "0" hex)
+             hex))
+         a)))
+
 (defn md5-hash [s]
-  (let [md5 (Md5.)]
-    (.update md5 (string/trim s))
-    (crypt/byteArrayToHex (.digest md5))))
+  (-> (doto (Md5.)
+        (.update (string/trim s)))
+      (.digest)
+      (bytes-to-hex)))
 
 (defn card [uid id {:keys [svg title notes created owner]}]
   [:span.mdl-card.mdl-shadow--2dp
@@ -32,7 +42,10 @@
             :width "256px"}}
    [:a.mdl-card__title.mdl-card--expand
     ;; TODO: unparse this
-    {:href (str (if (= uid (:uid @firebase/user)) "#/draw/" (str "#/view/" uid "/")) id)}
+    {:href (str (if (= uid (:uid @firebase/user "anyonymous"))
+                  "#/draw/"
+                  (str "#/view/" uid "/"))
+                id)}
     ;; TODO: put viewbox in the svg data
     ;; TODO: set as background?
     [draw/prepare-svg :svg {:width "100px" :height "100px" :view-box "0 0 400 400"} svg]]
@@ -48,17 +61,22 @@
           (fn [e]
             (firebase/delete ["users" me "drawings" id]))}
          [:i.material-icons "\uE872"]]
-        (let [photo (or (get-in owner ["settings" "photo-url"])
-                        (str "//www.gravatar.com/avatar/" (md5-hash uid) "?d=wavatar"))]
+        (let [photo (get-in owner ["settings" "photo-url"]
+                            (str "//www.gravatar.com/avatar/" (md5-hash uid) "?d=wavatar"))]
+          [:span photo]
           [:span.mdl-button.mdl-button--fab.mdl-button--mini-fab
-           {:title (get-in owner ["settings" "display-name"])
+           {:title (get-in owner ["settings" "display-name"]
+                           "Unknown")
             :style {:cursor "default"
                     :background-image (str "url(" photo ")")
                     :background-size "cover"
                     :background-repeat "no-repeat"}}])))
     [:div.mdl-card__menu
      [:a.mdl-button.mdl-button--icon
-      {:href (str (if (= uid (:uid @firebase/user)) "#/draw/" (str "#/view/" uid "/")) id)}
+      {:href (str (if (= uid (:uid @firebase/user "anyonymous"))
+                    "#/draw/"
+                    (str "#/view/" uid "/"))
+                  id)}
       [:i.material-icons "share"]]]]])
 
 (defn gallery [drawings]
@@ -83,14 +101,15 @@
 (defn my-gallery [params]
   (if-let [uid (:uid @firebase/user)]
     [firebase/on ["users" uid "drawings"]
-     (fn [drawings]
-       (let [drawings (js->clj @drawings)
+     (fn [d]
+       (let [drawings (js->clj @d)
              search (:search @model/app-state)]
          [gallery
           (doall
             (for [[id {:strs [svg title notes created]}] drawings
-                  :when (or (string/blank? search) (re-find (re-pattern (str "(?i)" search))
-                                                            (str title notes created)))]
+                  :when (or (string/blank? search)
+                            (re-find (re-pattern (str "(?i)" search))
+                                     (str title notes created)))]
               [[uid id] {:svg (edn/read-string svg)
                          :title title
                          :notes notes

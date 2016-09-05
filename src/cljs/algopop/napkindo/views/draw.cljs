@@ -2,6 +2,7 @@
   (:require
     [algopop.napkindo.names :as names]
     [reagent.core :as reagent]
+    [reagent.ratom :as ratom]
     [devcards.core]
     [clojure.string :as string]
     [cljs.tools.reader.edn :as edn])
@@ -10,20 +11,14 @@
 
 (def default-dims [400 400])
 
-(defn xy [e [width height]]
-  (let [t (if (exists? (.-currentTarget e))
-            (.-currentTarget e)
-            (.-target e))
-        rect (.getBoundingClientRect t)
-        ;; Android old versions don't calculate the correct rect width/height
-        w (.. t -width -baseVal -value)
-        h (.. t -height -baseVal -value)]
+(defn xy [e [width height] elem]
+  (let [rect (.getBoundingClientRect elem)]
     [(-> (- (.-clientX e) (.-left rect))
-         (/ w)
+         (/ (.-width rect))
          (* width)
          (js/Math.round))
      (-> (- (.-clientY e) (.-top rect))
-         (/ h)
+         (/ (.-height rect))
          (* height)
          (js/Math.round))]))
 
@@ -118,7 +113,20 @@
        (set! js/window.location.hash "#/draw/new"))}
     [:i.material-icons "\uE31B"]]])
 
-(defn a-draw [drawing history img mode select drag dropped start-path continue-path end-path save]
+(defn paths [drawing mode]
+  (into
+    [:g {:fill "none"
+         :style {:pointer-events "none"}
+         :on-touch-start
+         (fn [e] (.preventDefault e))
+         :stroke "black"
+         :stroke-width 5
+         :stroke-linecap "round"
+         :stroke-linejoin "round"}]
+    (for [elem (:svg @drawing)]
+      (prepare elem @mode))))
+
+(defn a-draw [drawing dims notes history img mode select drag dropped start-path continue-path end-path save container]
   [:div
    [:div.mdl-grid
     [:div.mdl-cell.mdl-cell--6-col
@@ -144,14 +152,18 @@
            (swap! drawing assoc :title (.. e -target -value)))}]]]]]
    [:div
     ;; http://alistapart.com/article/creating-intrinsic-ratios-for-video
-    {:style {:height 0
-             :border "1px solid black"
+    {:style {:position "relative"
+             :height 0
              :padding-bottom "100%"
-             :position "relative"}}
+             :border "1px solid black"}
+     :ref (fn [elem]
+            (when elem
+              ;; TODO: why is this called so much???
+              (reset! container elem)))}
     [:svg
      (merge-with
        merge
-       {:view-box (string/join " " (concat [0 0] (:dims @drawing default-dims)))
+       {:view-box (string/join " " (concat [0 0] @dims))
         :style {:position "absolute"
                 :top 0
                 :height "100%"
@@ -188,21 +200,12 @@
                 :width "100%"
                 :height "100%"
                 :opacity 0.3}])
-     (into
-       [:g {:fill "none"
-            :style {:pointer-events "none"}
-            :on-touch-start
-            (fn [e] (.preventDefault e))
-            :stroke "black"
-            :stroke-width 5
-            :stroke-linecap "round"
-            :stroke-linejoin "round"}]
-       (for [elem (:svg @drawing)]
-         (prepare elem @mode)))]]
+     [paths drawing mode]]]
    [:textarea
     {:rows 5
-     :style {:width "100%"}
-     :default-value (:notes @drawing)
+     :style {:width "100%"
+             :box-sizing "border-box"}
+     :value @notes
      :on-blur save
      :on-change
      (fn notes-entered [e]
@@ -213,6 +216,8 @@
   ;; also should probably save after undo/redo?
   (let [history (atom {:index -1
                        :values []})
+        dims (ratom/reaction (:dims @drawing default-dims))
+        notes (ratom/reaction (:notes @drawing))
         save (fn []
                (swap! history new-state @drawing)
                (save))
@@ -220,16 +225,17 @@
         pen-down? (reagent/atom false)
         mode (reagent/atom ::draw)
         selected (reagent/atom nil)
+        container (atom nil)
         start-path
         (fn start-path [e]
           (when (not= (.-buttons e) 0)
             (reset! pen-down? true)
-            (let [[x y] (xy e (:dims @drawing default-dims))]
+            (let [[x y] (xy e @dims @container)]
               (swap! drawing update :svg conj [:path {:d ['M x y 'L x y]}]))))
         continue-path
         (fn continue-path [e]
           (when @pen-down?
-            (let [[x y] (xy e (:dims @drawing default-dims))]
+            (let [[x y] (xy e @dims @container)]
               (swap! drawing update :svg #(update-in % [(dec (count %)) 1 :d] conj x y)))))
         end-path
         (fn end-path [e]
@@ -248,7 +254,7 @@
         dropped
         (fn [e]
           (prn "dropped"))]
-    [a-draw drawing history img mode select drag dropped start-path continue-path end-path save]))
+    [a-draw drawing dims notes history img mode select drag dropped start-path continue-path end-path save container]))
 
 (defcard-rg draw-card
   [draw (reagent/atom {:svg []}) nil])
