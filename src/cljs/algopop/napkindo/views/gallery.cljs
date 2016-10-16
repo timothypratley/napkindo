@@ -88,15 +88,15 @@
 
 (defcard-rg gallery-card
   [gallery
-   {[1 2] {:svg [[:circle {:r 30}]]
-           :title "title"
-           :notes "here are some notes"}
-    [3 4] {:svg [[:circle {:r 30 :cx 100 :cy 100}]]
-           :title "title2 with somelongwords"
-           :notes "here are some other notes"}
-    [5 6] {:svg [[:circle {:r 30 :cx 150 :cy 150}]]
-           :title "title3"
-           :notes "some other notes"}}])
+   {["1" 2] {:svg [[:circle {:r 30}]]
+             :title "title"
+             :notes "here are some notes"}
+    ["3" 4] {:svg [[:circle {:r 30 :cx 100 :cy 100}]]
+             :title "title2 with somelongwords"
+             :notes "here are some other notes"}
+    ["5" 6] {:svg [[:circle {:r 30 :cx 150 :cy 150}]]
+             :title "title3"
+             :notes "some other notes"}}])
 
 (defn my-gallery [params]
   (if-let [uid (:uid @firebase/user)]

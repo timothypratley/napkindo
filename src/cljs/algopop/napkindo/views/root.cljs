@@ -28,6 +28,7 @@
         [:p "Loading..."])
       ;; TODO: is this just firebase/once now?
       (let [drawing (reagent/atom {:svg []
+                                   :svg-attrs {:stroke-width 3}
                                    :title (names/sketch-name)})
             r (doto (firebase/db-ref ["users" uid "drawings" id])
                 (.once

@@ -94,6 +94,22 @@
       [:span.mdl-button.mdl-button--icon
        {:title "Background"}
        [:i.material-icons "\uE3F4"]]])
+   [:label.mdl-button
+    {:title "Pen"
+     :for "pen_select"}
+    [:i.material-icons "\uE91A"]
+    [:select
+     {:id "pen_select"
+      :default-value (get-in @drawing [:svg-attrs :stroke-width] 3)
+      :on-change
+      (fn pen-selected [e]
+        (let [stroke-width (js/parseInt (.. e -target -value))]
+          (prn (swap! drawing assoc-in [:svg-attrs :stroke-width] stroke-width))))}
+     [:option {:value 1} 1]
+     [:option {:value 2} 2]
+     [:option {:value 3} 3]
+     [:option {:value 4} 4]
+     [:option {:value 5} 5]]]
    [:button.mdl-button.mdl-button--icon
     {:title "Undo"
      :on-click
@@ -115,14 +131,17 @@
 
 (defn paths [drawing mode]
   (into
-    [:g {:fill "none"
-         :style {:pointer-events "none"}
-         :on-touch-start
-         (fn [e] (.preventDefault e))
-         :stroke "black"
-         :stroke-width 5
-         :stroke-linecap "round"
-         :stroke-linejoin "round"}]
+    [:g
+     (merge
+       {:style {:pointer-events "none"}
+        :on-touch-start
+        (fn [e] (.preventDefault e))
+        :fill "none"
+        :stroke "black"
+        :stroke-width 4
+        :stroke-linecap "round"
+        :stroke-linejoin "round"}
+       (:svg-attrs @drawing))]
     (for [elem (:svg @drawing)]
       (prepare elem @mode))))
 
@@ -159,12 +178,12 @@
             (when elem
               ;; TODO: why is this called so much???
               (reset! container elem)))}
-    [:svg
+    [:div
      (merge-with
        merge
-       {:view-box (string/join " " (concat [0 0] @dims))
-        :style {:position "absolute"
+       {:style {:position "absolute"
                 :top 0
+                :width "100%"
                 :height "100%"
                 :-webkit-touch-callout "none"
                 :-webkit-user-select "none"
@@ -193,13 +212,15 @@
           :on-mouse-up end-path
           :on-touch-cancel (one-touch-handler end-path)
           :on-mouse-out end-path}))
-     (when @img
-       [:image {:xlink-href @img
-                :style {:pointer-events "none"}
-                :width "100%"
-                :height "100%"
-                :opacity 0.3}])
-     [paths drawing mode]]]
+     [:svg
+      {:view-box (string/join " " (concat [0 0] @dims))}
+      (when @img
+        [:image {:xlink-href @img
+                 :style {:pointer-events "none"}
+                 :width "100%"
+                 :height "100%"
+                 :opacity 0.3}])
+      [paths drawing mode]]]]
    [:textarea
     {:rows 5
      :style {:width "100%"
@@ -219,7 +240,7 @@
         notes (ratom/reaction (:notes @drawing))
         save (fn []
                (swap! history new-state @drawing)
-               (save))
+               (when save (save)))
         img (reagent/atom nil)
         pen-down? (reagent/atom false)
         mode (reagent/atom ::draw)
@@ -262,7 +283,7 @@
   (into
     [tag (merge {:fill "none"
                  :stroke "black"
-                 :stroke-width 5
+                 :stroke-width 4
                  :stroke-linecap "round"
                  :stroke-linejoin "round"}
                 properties)]
@@ -271,10 +292,12 @@
 
 (defn observe [drawing]
   [prepare-svg :svg
-   {:view-box (string/join " " (concat [0 0] (:dims @drawing default-dims)))
-    :style {:border "1px solid black"
-            ;; TODO: moar browzazs
-            :-webkit-user-select "none"}}
+   (merge
+     {:view-box (string/join " " (concat [0 0] (:dims @drawing default-dims)))
+      :style {:border "1px solid black"
+              ;; TODO: moar browzazs
+              :-webkit-user-select "none"}}
+     (:svg-attrs @drawing))
    (edn/read-string (some-> @drawing (.-svg)))])
 
 (defcard-rg view-card
