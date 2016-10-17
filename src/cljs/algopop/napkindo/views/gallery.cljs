@@ -129,7 +129,7 @@
                 :when (or (string/blank? search)
                           (re-find (re-pattern (str "(?i)" search))
                                    (str (get-in user ["settings" "display-name"]) title notes created)))]
-            [[uid id] (model/parse drawing)])))])])
+            [[uid id] (assoc (model/parse drawing) :owner user)])))])])
 
 (defcard-rg all-gallery-card
   all-gallery)
