@@ -1,11 +1,11 @@
 (ns algopop.napkindo.views.draw
   (:require
+    [algopop.napkindo.model :as model]
     [algopop.napkindo.names :as names]
-    [reagent.core :as reagent]
-    [reagent.ratom :as ratom]
-    [devcards.core]
     [clojure.string :as string]
-    [cljs.tools.reader.edn :as edn])
+    [devcards.core]
+    [reagent.core :as reagent]
+    [reagent.ratom :as ratom])
   (:require-macros
     [devcards.core :refer [defcard-rg]]))
 
@@ -111,6 +111,21 @@
      [:option {:value 3} 3]
      [:option {:value 4} 4]
      [:option {:value 5} 5]]]
+   [:button#color_select.mdl-button.mdl-js-button.mdl-button--icon
+    {:title "Color"}
+    [:i.material-icons "\uE3B7"]]
+   (into
+     [:ul.mdl-menu.mdl-menu--bottom-left.mdl-js-menu.mdl-js-ripple-effect
+      {:for "color_select"
+       :value (get-in @drawing [:svg-attrs :stroke] "black")}]
+     (for [color model/colors]
+       [:li.mdl-menu__item
+        {:on-click
+         (fn color-selected [e]
+           (swap! drawing assoc-in [:svg-attrs :stroke] color)
+           (when save (save)))
+         :style {:background-color color}}
+        color]))
    [:button.mdl-button.mdl-button--icon
     {:title "Undo"
      :on-click

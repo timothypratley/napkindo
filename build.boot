@@ -10,6 +10,7 @@
                  [devcards "0.2.1-7"]
                  [bidi "2.0.9"]
                  [cljsjs/firebase "3.3.0-0"]
+                 [cljsjs/material "1.2.1-0"]
                  [cljsjs/google-platformjs-extern "1.0.0-0"]])
 
 (require

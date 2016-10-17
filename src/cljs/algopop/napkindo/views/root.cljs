@@ -7,6 +7,7 @@
     [algopop.napkindo.views.draw :as draw]
     [algopop.napkindo.views.gallery :as gallery]
     [bidi.bidi :as bidi]
+    [cljsjs.material]
     [clojure.string :as string]
     [reagent.core :as reagent]))
 
