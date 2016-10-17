@@ -10,6 +10,11 @@
     [clojure.string :as string]
     [reagent.core :as reagent]))
 
+(defn with-timestamps [m]
+  (if (contains? m :created)
+    (assoc (update m :created #(.getTime %)) :modified firebase/timestamp)
+    (assoc m :created firebase/timestamp)))
+
 (defn draw-view [{:keys [id]}]
   (if-let [uid (:uid @firebase/user "anonymous")]
     (if (= id "new")
@@ -41,7 +46,7 @@
            (.set r (-> @drawing
                        (update :svg pr-str)
                        (update :svg-attrs pr-str)
-                       (assoc :created firebase/timestamp)
+                       (with-timestamps)
                        (clj->js))))]))
     [:h2 "Must be logged in to draw"]))
 
