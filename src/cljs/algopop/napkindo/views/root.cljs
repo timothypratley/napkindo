@@ -7,14 +7,8 @@
     [algopop.napkindo.views.draw :as draw]
     [algopop.napkindo.views.gallery :as gallery]
     [bidi.bidi :as bidi]
-    [cljs.tools.reader.edn :as edn]
     [clojure.string :as string]
     [reagent.core :as reagent]))
-
-(defn maybe-update [m k f]
-  (if (contains? m k)
-    (update m k f)
-    m))
 
 (defn draw-view [{:keys [id]}]
   (if-let [uid (:uid @firebase/user "anonymous")]
@@ -37,8 +31,8 @@
                     ;; TODO: make this a non-destructive merge
                     (swap! drawing merge
                            (-> (.val snapshot)
-                               (js->clj :keywordize-keys true)
-                               (maybe-update :svg edn/read-string))))
+                               (js->clj)
+                               (model/parse))))
                   (fn failure [error]
                     (js/alert "Connection failure:" error))))]
         [draw/draw
@@ -46,6 +40,7 @@
          (fn save-drawing []
            (.set r (-> @drawing
                        (update :svg pr-str)
+                       (update :svg-attrs pr-str)
                        (assoc :created firebase/timestamp)
                        (clj->js))))]))
     [:h2 "Must be logged in to draw"]))

@@ -3,7 +3,6 @@
     [algopop.napkindo.firebase :as firebase]
     [algopop.napkindo.model :as model]
     [algopop.napkindo.views.draw :as draw]
-    [cljs.tools.reader.edn :as edn]
     [clojure.string :as string]
     [devcards.core])
   (:require-macros
@@ -36,7 +35,7 @@
       (.digest)
       (bytes-to-hex)))
 
-(defn card [uid id {:keys [svg title notes created owner]}]
+(defn card [uid id {:keys [svg svg-attrs title owner]}]
   [:span.mdl-card.mdl-shadow--2dp
    {:style {:display "inline-block"
             :width "256px"}}
@@ -48,7 +47,12 @@
                 id)}
     ;; TODO: put viewbox in the svg data
     ;; TODO: set as background?
-    [draw/prepare-svg :svg {:width "100px" :height "100px" :view-box "0 0 400 400"} svg]]
+    [draw/prepare-svg
+     :svg
+     (merge
+       {:width "100px" :height "100px" :view-box "0 0 400 400"}
+       svg-attrs)
+     svg]]
    [:div.mdl-card__supporting-text title]
    [:div.mdl-card__actions
     {:style {:height "52px"
@@ -101,19 +105,15 @@
 (defn my-gallery [params]
   (if-let [uid (:uid @firebase/user)]
     [firebase/on ["users" uid "drawings"]
-     (fn [d]
-       (let [drawings (js->clj @d)
-             search (:search @model/app-state)]
+     (fn [drawings]
+       (let [search (:search @model/app-state)]
          [gallery
           (doall
-            (for [[id {:strs [svg title notes created]}] drawings
+            (for [[id {:strs [title notes created] :as drawing}] (js->clj @drawings)
                   :when (or (string/blank? search)
                             (re-find (re-pattern (str "(?i)" search))
                                      (str title notes created)))]
-              [[uid id] {:svg (edn/read-string svg)
-                         :title title
-                         :notes notes
-                         :created (js/Date. created)}]))]))]
+              [[uid id] (model/parse drawing)]))]))]
     [:h4 "Sign in (top right corner) to see your gallery."]))
 
 (defn all-gallery [params]
@@ -125,14 +125,11 @@
           (for [[uid user] (js->clj @users)
                 :let [drawings (get user "drawings")]
                 :when (map? drawings)
-                [id {:strs [svg title notes created]}] drawings
-                :when (or (string/blank? search) (re-find (re-pattern (str "(?i)" search))
-                                                          (str (get-in user ["settings" "display-name"]) title notes created)))]
-            [[uid id] {:svg (edn/read-string svg)
-                       :owner user
-                       :title title
-                       :notes notes
-                       :created (js/Date. created)}])))])])
+                [id {:strs [title notes created] :as drawing}] drawings
+                :when (or (string/blank? search)
+                          (re-find (re-pattern (str "(?i)" search))
+                                   (str (get-in user ["settings" "display-name"]) title notes created)))]
+            [[uid id] (model/parse drawing)])))])])
 
 (defcard-rg all-gallery-card
   all-gallery)

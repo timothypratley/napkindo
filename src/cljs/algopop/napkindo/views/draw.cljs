@@ -57,7 +57,7 @@
 (defn current [{:keys [index values] :as history}]
   (values index))
 
-(defn toolbar [drawing history mode img]
+(defn toolbar [drawing history mode img save]
   [:div
    (if (= @mode ::edit)
      [:button.mdl-button.mdl-button--icon
@@ -100,11 +100,12 @@
     [:i.material-icons "\uE91A"]
     [:select
      {:id "pen_select"
-      :default-value (get-in @drawing [:svg-attrs :stroke-width] 3)
+      :value (get-in @drawing [:svg-attrs :stroke-width] 3)
       :on-change
       (fn pen-selected [e]
         (let [stroke-width (js/parseInt (.. e -target -value))]
-          (prn (swap! drawing assoc-in [:svg-attrs :stroke-width] stroke-width))))}
+          (swap! drawing assoc-in [:svg-attrs :stroke-width] stroke-width)
+          (when save (save))))}
      [:option {:value 1} 1]
      [:option {:value 2} 2]
      [:option {:value 3} 3]
@@ -149,7 +150,7 @@
   [:div
    [:div.mdl-grid
     [:div.mdl-cell.mdl-cell--6-col
-     [toolbar drawing history mode img]]
+     [toolbar drawing history mode img save]]
     [:div.mdl-cell.mdl-cell--6-col
      [:button.mdl-button.mdl-button--icon
       {:style {:float "right"}
@@ -178,10 +179,11 @@
             (when elem
               ;; TODO: why is this called so much???
               (reset! container elem)))}
-    [:div
+    [:svg
      (merge-with
        merge
-       {:style {:position "absolute"
+       {:view-box (string/join " " (concat [0 0] @dims))
+        :style {:position "absolute"
                 :top 0
                 :width "100%"
                 :height "100%"
@@ -212,15 +214,13 @@
           :on-mouse-up end-path
           :on-touch-cancel (one-touch-handler end-path)
           :on-mouse-out end-path}))
-     [:svg
-      {:view-box (string/join " " (concat [0 0] @dims))}
-      (when @img
-        [:image {:xlink-href @img
-                 :style {:pointer-events "none"}
-                 :width "100%"
-                 :height "100%"
-                 :opacity 0.3}])
-      [paths drawing mode]]]]
+     (when @img
+       [:image {:xlink-href @img
+                :style {:pointer-events "none"}
+                :width "100%"
+                :height "100%"
+                :opacity 0.3}])
+     [paths drawing mode]]]
    [:textarea
     {:rows 5
      :style {:width "100%"
@@ -291,16 +291,17 @@
       (prepare elem ::draw))))
 
 (defn observe [drawing]
-  [prepare-svg :svg
-   (merge
-     {:view-box (string/join " " (concat [0 0] (:dims @drawing default-dims)))
-      :style {:border "1px solid black"
-              ;; TODO: moar browzazs
-              :-webkit-user-select "none"}}
-     (:svg-attrs @drawing))
-   (edn/read-string (some-> @drawing (.-svg)))])
+  (let [{:keys [dims svg svg-attrs]} @drawing]
+    [prepare-svg :svg
+     (merge
+       {:view-box (string/join " " (concat [0 0] (or dims default-dims)))
+        :style {:border "1px solid black"
+                ;; TODO: moar browzazs
+                :-webkit-user-select "none"}}
+       svg-attrs)
+     svg]))
 
 (defcard-rg view-card
   [observe
    (reagent/atom
-     #js {"svg" "[[:path {:d [M 50 50 L 100 100]}] [:path {:d [M 200 200 L 300 300]}]]"})])
+     {:svg "[[:path {:d [M 50 50 L 100 100]}] [:path {:d [M 200 200 L 300 300]}]]"})])
