@@ -306,7 +306,7 @@
       (prepare elem ::draw))))
 
 (defn observe [drawing]
-  (let [{:keys [dims svg svg-attrs]} @drawing]
+  (let [{:keys [dims svg svg-attrs]} (model/parse (js->clj @drawing))]
     [prepare-svg :svg
      (merge
        {:view-box (string/join " " (concat [0 0] (or dims default-dims)))
@@ -319,4 +319,4 @@
 (defcard-rg view-card
   [observe
    (reagent/atom
-     {:svg "[[:path {:d [M 50 50 L 100 100]}] [:path {:d [M 200 200 L 300 300]}]]"})])
+     {:svg '[[:path {:d [M 50 50 L 100 100]}] [:path {:d [M 200 200 L 300 300]}]]})])
