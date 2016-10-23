@@ -319,4 +319,4 @@
 (defcard-rg view-card
   [observe
    (reagent/atom
-     {:svg '[[:path {:d [M 50 50 L 100 100]}] [:path {:d [M 200 200 L 300 300]}]]})])
+     #js {:svg "[[:path {:d [M 50 50 L 100 100]}] [:path {:d [M 200 200 L 300 300]}]]"})])
