@@ -50,7 +50,7 @@
     [draw/prepare-svg
      :svg
      (merge
-       {:width "100px" :height "100px" :view-box "0 0 400 400"}
+       {:width "150px" :height "150px" :view-box "0 0 400 400"}
        svg-attrs)
      svg]]
    [:div.mdl-card__supporting-text title]

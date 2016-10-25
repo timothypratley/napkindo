@@ -115,8 +115,11 @@
   [path component]
   (let [ref (db-ref path)
         a (reagent/atom nil)]
-    (.on ref "value" (fn [x]
-                       (reset! a (.val x))))
+    (-> ref
+        ;; TODO this is limiting users, not drawings
+        ;;(.limitToLast 10)
+        (.on "value" (fn [x]
+                       (reset! a (.val x)))))
     (reagent/create-class
       {:display-name "listener"
        :component-will-unmount

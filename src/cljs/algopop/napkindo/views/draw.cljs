@@ -22,14 +22,70 @@
          (* height)
          (js/Math.round))]))
 
-(defn prepare [path mode]
-  (if (= mode ::edit)
+(defn vec-remove
+  "remove elem in coll"
+  [v pos]
+  (if (< pos (count v))
+    (vec (concat (subvec v 0 pos) (subvec v (inc pos))))
+    v))
+
+(defn erase [drawing idx]
+  (update drawing :svg vec-remove idx))
+
+
+
+;; TODO: clean this up
+(defn remove-point [drawing element-idx path-idx]
+  (update-in
+    drawing
+    [:svg element-idx 1 :d]
+    (fn [path]
+      (when-let [c (loop [cnt 0
+                          idx 0
+                          [x & remaining] path]
+                     (cond
+                       (nil? x) nil
+                       (and (number? x) (= path-idx idx)) cnt
+                       (number? x) (recur (+ cnt 2) (inc idx) (rest remaining))
+                       :else (recur (inc cnt) idx remaining)))]
+        (if (<= c 1)
+          (into
+            ['M (nth path 4) (nth path 5) 'L]
+            (drop 6 path))
+          (-> path
+              (vec-remove c)
+              (vec-remove c)))))))
+
+(defn erase-point [drawing element-idx path-idx]
+  (if (<= (count (get-in drawing [:svg element-idx 1 :d]))
+          6)
+    (erase drawing element-idx)
+    (remove-point drawing element-idx path-idx)))
+
+(defn prepare [[tag attrs] mode element-idx drawing save]
+  (if (= mode ::draw)
+    [tag (update attrs :d #(string/join " " %))]
     (into
       [:g
-       (update-in path [1 :d] #(string/join " " %))]
-      (for [[x y] (partition 2 (filter number? (get-in path [1 :d])))]
-        [:circle {:cx x :cy y :r 5 :stroke "blue" :stroke-width 1}]))
-    (update-in path [1 :d] #(string/join " " %))))
+       [tag (update attrs :d #(string/join " " %))]]
+      (map-indexed
+        (fn [path-idx [x y]]
+          [:circle
+           {:on-mouse-down
+            (if (= mode ::erase)
+              (fn [e]
+                (swap! drawing erase-point element-idx path-idx)
+                (when save (save)))
+              (fn [e]
+                ;; TODO: grab it?
+                ))
+            :cx x
+            :cy y
+            :r (if (= mode ::erase) 3 5)
+            :fill (if (= mode ::erase) "white" "none")
+            :stroke (if (= mode ::erase) "red" "blue")
+            :stroke-width 1}])
+        (partition 2 (filter number? (:d attrs)))))))
 
 (defn one-touch-handler [f]
   (fn a-one-touch-handler [e]
@@ -59,19 +115,27 @@
 
 (defn toolbar [drawing history mode img save]
   [:div
-   (if (= @mode ::edit)
-     [:button.mdl-button.mdl-button--icon
-      {:title "Draw"
-       :on-click
-       (fn draw-mode [e]
-         (reset! mode ::draw))}
-      [:i.material-icons "\uE3C9"]]
-     [:button.mdl-button.mdl-button--icon
-      {:title "Edit"
-       :on-click
-       (fn edit-mode [e]
-         (reset! mode ::edit))}
-      [:i.material-icons "\uE39E"]])
+   [:button.mdl-button.mdl-button--icon
+    {:title "Draw"
+     :class (when (= @mode ::draw) "mdl-button--colored")
+     :on-click
+     (fn draw-mode [e]
+       (reset! mode ::draw))}
+    [:i.material-icons "\uE3C9"]]
+   [:button.mdl-button.mdl-button--icon
+    {:title "Edit"
+     :class (when (= @mode ::edit) "mdl-button--colored")
+     :on-click
+     (fn edit-mode [e]
+       (reset! mode ::edit))}
+    [:i.material-icons "\uE39E"]]
+   [:button.mdl-button.mdl-button--icon
+    {:title "Erase"
+     :class (when (= @mode ::erase) "mdl-button--colored")
+     :on-click
+     (fn erase-mode [e]
+       (reset! mode ::erase))}
+    [:i.material-icons "\uE14C"]]
    (if @img
      [:button.mdl-button.mdl-button--icon
       {:title "Clear Background"
@@ -145,23 +209,38 @@
        (set! js/window.location.hash "#/draw/new"))}
     [:i.material-icons "\uE31B"]]])
 
-(defn paths [drawing mode]
+(defn paths [drawing mode save]
   (into
     [:g
      (merge
-       {:style {:pointer-events "none"}
+       {:style {:pointer-events (if (= ::erase @mode)
+                                  "visiblePainted"
+                                  "none")}
         :on-touch-start
-        (fn [e] (.preventDefault e))
+        (fn [e]
+          (.preventDefault e))
         :fill "none"
         :stroke "black"
         :stroke-width 4
         :stroke-linecap "round"
         :stroke-linejoin "round"}
        (:svg-attrs @drawing))]
-    (for [elem (:svg @drawing)]
-      (prepare elem @mode))))
+    (map-indexed
+      (fn [idx elem]
+        (prepare
+          (cond-> elem
+            (= ::erase @mode) (assoc-in [1 :on-mouse-down]
+                                        (fn [e]
+                                          (swap! drawing erase idx)
+                                          (when save (save)))))
+          @mode
+          idx
+          drawing
+          save))
+      (:svg @drawing))))
 
-(defn a-draw [drawing dims notes history img mode select drag dropped start-path continue-path end-path save container]
+(defn a-draw [drawing dims notes history img mode container
+              select drag dropped start-path continue-path end-path save]
   [:div
    [:div.mdl-grid
     [:div.mdl-cell.mdl-cell--6-col
@@ -208,7 +287,8 @@
                 :-moz-user-select "none"
                 :-ms-user-select "none"
                 :user-select "none"}}
-       (if (= @mode ::edit)
+       (case @mode
+         ::edit
          {:style {:cursor "move"}
           :on-touch-start (one-touch-handler select)
           :on-mouse-down select
@@ -219,6 +299,10 @@
           :on-mouse-up dropped
           :on-touch-cancel (one-touch-handler dropped)
           :on-mouse-out dropped}
+
+         ::erase
+         {:style {:cursor "cell"}}
+
          {:style {:cursor "crosshair"}
           :on-touch-start (one-touch-handler start-path)
           :on-mouse-down start-path
@@ -235,7 +319,7 @@
                 :width "100%"
                 :height "100%"
                 :opacity 0.3}])
-     [paths drawing mode]]]
+     [paths drawing mode save]]]
    [:textarea
     {:rows 5
      :style {:width "100%"
@@ -253,14 +337,14 @@
                        :values []})
         dims (ratom/reaction (:dims @drawing default-dims))
         notes (ratom/reaction (:notes @drawing))
-        save (fn []
-               (swap! history new-state @drawing)
-               (when save (save)))
         img (reagent/atom nil)
         pen-down? (reagent/atom false)
         mode (reagent/atom ::draw)
         selected (reagent/atom nil)
         container (atom nil)
+        save (fn []
+               (swap! history new-state @drawing)
+               (when save (save)))
         start-path
         (fn start-path [e]
           (when (not= (.-buttons e) 0)
@@ -278,18 +362,18 @@
             (when e
               (continue-path e))
             (reset! pen-down? false)
-            (when save
-              (save))))
+            (when save (save))))
         select
-        (fn [e]
+        (fn select [e]
           (reset! selected (.-target e)))
         drag
-        (fn [e]
+        (fn drag [e]
           (prn "drag"))
         dropped
-        (fn [e]
+        (fn dropped [e]
           (prn "dropped"))]
-    [a-draw drawing dims notes history img mode select drag dropped start-path continue-path end-path save container]))
+    [a-draw drawing dims notes history img mode container
+     select drag dropped start-path continue-path end-path save]))
 
 (defcard-rg draw-card
   [draw (reagent/atom {:svg []}) nil])
@@ -303,7 +387,7 @@
                  :stroke-linejoin "round"}
                 properties)]
     (for [elem elems]
-      (prepare elem ::draw))))
+      (prepare elem ::draw nil nil nil))))
 
 (defn observe [drawing]
   (let [{:keys [dims svg svg-attrs]} (model/parse (js->clj @drawing))]
